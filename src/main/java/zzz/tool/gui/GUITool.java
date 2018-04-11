@@ -2,6 +2,7 @@ package zzz.tool.gui;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
@@ -22,6 +23,8 @@ import java.text.ParseException;
 import java.util.Iterator;
 import java.util.Vector;
 
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.synth.SynthLookAndFeel;
@@ -34,23 +37,40 @@ import zss.tool.HexTool;
 import zss.tool.ReflectTool;
 import zss.tool.Version;
 
-@Version("2016-09-28")
-public final class GUITool
-{
+@Version("2018.04.11")
+public final class GUITool {
     private static final Logger LOGGER = LoggerFactory.getLogger(GUITool.class);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
 
     private static Method connectOwnedWindowMethod;
     private static Field ownedWindowListField;
 
-    public static Color newColor(final String hexColor)
-    {
+    public static <T extends Component> T addComponent(final JTabbedPane tabbedPane, final String title, final T component) {
+        tabbedPane.add(title, component);
+        return component;
+    }
+
+    public static <T extends Component> T addComponent(final Container container, final T component) {
+        container.add(component);
+        return component;
+    }
+
+    public static <T extends Component> T addComponent(final Container container, final T component, final Object constraints) {
+        container.add(component, constraints);
+        return component;
+    }
+
+    public static <T extends Component> T setViewportView(final JScrollPane scrollPane, final T component) {
+        scrollPane.setViewportView(component);
+        return component;
+    }
+
+    public static Color newColor(final String hexColor) {
         char[] chars = hexColor.toCharArray();
         return new Color(HexTool.transform(chars[1], chars[2]) & 255, HexTool.transform(chars[3], chars[4]) & 255, HexTool.transform(chars[5], chars[6]) & 255);
     }
 
-    public static Dimension getScreenSize()
-    {
+    public static Dimension getScreenSize() {
         Dimension size = TOOLKIT.getScreenSize();
         Insets insets = TOOLKIT.getScreenInsets(GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration());
         size.height -= insets.bottom + insets.top;
@@ -58,226 +78,161 @@ public final class GUITool
         return size;
     }
 
-    public static void fullScreen(final Window window)
-    {
+    public static void fullScreen(final Window window) {
         Dimension size = TOOLKIT.getScreenSize();
         Insets insets = TOOLKIT.getScreenInsets(window.getGraphicsConfiguration());
         window.setLocation(insets.left, insets.top);
         window.setSize(size.width - insets.left - insets.right, size.height - insets.top - insets.bottom);
     }
 
-    public static Window findWindow(final Component component)
-    {
-        if (component == null)
-        {
+    public static Window findWindow(final Component component) {
+        if (component == null) {
             return null;
         }
-        if (component instanceof Window)
-        {
+        if (component instanceof Window) {
             return (Window) component;
         }
         return findWindow(component.getParent());
     }
 
-    public static Vector<?> getOwnedWindows(final Window window)
-    {
+    public static Vector<?> getOwnedWindows(final Window window) {
         Field field = getOwnedWindowListField();
-        if (field == null)
-        {
+        if (field == null) {
             return null;
         }
-        try
-        {
+        try {
             return ReflectTool.cast(field.get(window), Vector.class);
-        }
-        catch (IllegalArgumentException e)
-        {
+        } catch (IllegalArgumentException e) {
             LOGGER.warn(e.getMessage(), e);
-        }
-        catch (IllegalAccessException e)
-        {
+        } catch (IllegalAccessException e) {
             LOGGER.warn(e.getMessage(), e);
         }
         return null;
     }
 
-    private synchronized static Field getOwnedWindowListField()
-    {
-        if (ownedWindowListField == null)
-        {
-            try
-            {
+    private synchronized static Field getOwnedWindowListField() {
+        if (ownedWindowListField == null) {
+            try {
                 ownedWindowListField = Window.class.getDeclaredField("ownedWindowList");
                 ownedWindowListField.setAccessible(true);
-            }
-            catch (SecurityException e)
-            {
+            } catch (SecurityException e) {
                 LOGGER.warn(e.getMessage(), e);
-            }
-            catch (NoSuchFieldException e)
-            {
+            } catch (NoSuchFieldException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
         }
         return ownedWindowListField;
     }
 
-    public static void removeOwnedWindow(final Window window, final Window child)
-    {
+    public static void removeOwnedWindow(final Window window, final Window child) {
         Vector<?> windows = getOwnedWindows(window);
-        if (windows == null)
-        {
+        if (windows == null) {
             return;
         }
         Iterator<?> iterator = windows.iterator();
         WeakReference<?> reference;
-        while (iterator.hasNext())
-        {
+        while (iterator.hasNext()) {
             reference = ReflectTool.cast(iterator.next(), WeakReference.class);
-            if (reference == null)
-            {
+            if (reference == null) {
                 continue;
             }
-            if (child.equals(reference.get()))
-            {
+            if (child.equals(reference.get())) {
                 iterator.remove();
             }
         }
     }
 
-    public static void addOwnedWindow(final Window window, final Window child)
-    {
-        if (window == null || child == null)
-        {
+    public static void addOwnedWindow(final Window window, final Window child) {
+        if (window == null || child == null) {
             return;
         }
         removeOwnedWindow(window, child);
         Method method = getConnectOwnedWindowMethod();
-        if (method != null)
-        {
-            try
-            {
+        if (method != null) {
+            try {
                 method.invoke(window, child);
-            }
-            catch (IllegalArgumentException e)
-            {
+            } catch (IllegalArgumentException e) {
                 LOGGER.warn(e.getMessage(), e);
-            }
-            catch (IllegalAccessException e)
-            {
+            } catch (IllegalAccessException e) {
                 LOGGER.warn(e.getMessage(), e);
-            }
-            catch (InvocationTargetException e)
-            {
+            } catch (InvocationTargetException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
         }
     }
 
-    private synchronized static Method getConnectOwnedWindowMethod()
-    {
-        if (connectOwnedWindowMethod == null)
-        {
-            try
-            {
+    private synchronized static Method getConnectOwnedWindowMethod() {
+        if (connectOwnedWindowMethod == null) {
+            try {
                 connectOwnedWindowMethod = Window.class.getDeclaredMethod("connectOwnedWindow", Window.class);
                 connectOwnedWindowMethod.setAccessible(true);
-            }
-            catch (SecurityException e)
-            {
+            } catch (SecurityException e) {
                 LOGGER.warn(e.getMessage(), e);
-            }
-            catch (NoSuchMethodException e)
-            {
+            } catch (NoSuchMethodException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
         }
         return connectOwnedWindowMethod;
     }
 
-    public static void loadSynth(final File file)
-    {
+    public static void loadSynth(final File file) {
         InputStream stream;
-        try
-        {
+        try {
             stream = new FileInputStream(file);
-        }
-        catch (FileNotFoundException e)
-        {
+        } catch (FileNotFoundException e) {
             LOGGER.warn(e.getMessage(), e);
             return;
         }
-        try
-        {
+        try {
             loadSynth(stream);
-        }
-        finally
-        {
+        } finally {
             IOUtils.closeQuietly(stream);
         }
     }
 
-    public static void loadSynth(final String path)
-    {
+    public static void loadSynth(final String path) {
         InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
-        if (stream == null)
-        {
+        if (stream == null) {
             return;
         }
-        try
-        {
+        try {
             loadSynth(stream);
-        }
-        finally
-        {
+        } finally {
             IOUtils.closeQuietly(stream);
         }
     }
 
-    public static void loadSynth(final InputStream stream)
-    {
+    public static void loadSynth(final InputStream stream) {
         SynthLookAndFeel synth = new SynthLookAndFeel();
-        try
-        {
+        try {
             synth.load(stream, GUITool.class);
             UIManager.setLookAndFeel(synth);
-        }
-        catch (UnsupportedLookAndFeelException e)
-        {
+        } catch (UnsupportedLookAndFeelException e) {
             LOGGER.warn(e.getMessage(), e);
-        }
-        catch (ParseException e)
-        {
+        } catch (ParseException e) {
             LOGGER.warn(e.getMessage(), e);
         }
     }
 
-    public static void moveToCenter(final Window window)
-    {
+    public static void moveToCenter(final Window window) {
         Window owner = window.getOwner();
-        if (owner == null)
-        {
+        if (owner == null) {
             moveToScreenCenter(window);
-        }
-        else
-        {
+        } else {
             moveToCenter(window, owner);
         }
     }
 
-    public static void moveToScreenCenter(final Window window)
-    {
+    public static void moveToScreenCenter(final Window window) {
         Dimension size = TOOLKIT.getScreenSize();
         window.setLocation((size.width - window.getWidth()) / 2, (size.height - window.getHeight()) / 2);
     }
 
-    public static void moveToCenter(final Window window, final Window owner)
-    {
+    public static void moveToCenter(final Window window, final Window owner) {
         window.setLocation((owner.getWidth() - window.getWidth()) / 2 + owner.getX(), (owner.getHeight() - window.getHeight()) / 2 + owner.getX());
     }
 
-    public static FontRenderContext newFontRenderContext()
-    {
+    public static FontRenderContext newFontRenderContext() {
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
         Graphics2D graphics = image.createGraphics();
         graphics.dispose();
