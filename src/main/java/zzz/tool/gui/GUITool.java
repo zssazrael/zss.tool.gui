@@ -29,15 +29,15 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.synth.SynthLookAndFeel;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import zss.tool.HexTool;
+import zss.tool.IOTool;
 import zss.tool.ReflectTool;
 import zss.tool.Version;
 
-@Version("2018.04.11")
+@Version("2018.07.18")
 public final class GUITool {
     private static final Logger LOGGER = LoggerFactory.getLogger(GUITool.class);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
@@ -186,7 +186,7 @@ public final class GUITool {
         try {
             loadSynth(stream);
         } finally {
-            IOUtils.closeQuietly(stream);
+            IOTool.close(stream);
         }
     }
 
@@ -198,7 +198,7 @@ public final class GUITool {
         try {
             loadSynth(stream);
         } finally {
-            IOUtils.closeQuietly(stream);
+            IOTool.close(stream);
         }
     }
 

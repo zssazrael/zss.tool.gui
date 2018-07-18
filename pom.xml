@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -5,8 +6,13 @@
     <artifactId>tool.gui</artifactId>
     <version>2016.09.28</version>
     <packaging>jar</packaging>
-
     <name>tool.gui</name>
+    <licenses>
+        <license>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <name>Apache License, Version 2.0</name>
+        </license>
+    </licenses>
     <build>
         <plugins>
             <plugin>
@@ -54,7 +60,7 @@
         <dependency>
             <groupId>zss</groupId>
             <artifactId>tool</artifactId>
-            <version>2017.10.09</version>
+            <version>2018.03.26</version>
         </dependency>
     </dependencies>
 </project>
